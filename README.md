@@ -1,11 +1,9 @@
 # Wi-Fi Ducky
-Upload, save and run keystroke injections remotely with an ESP8266 + ATmega32u4
+上传,编辑,运行 按键脚本 , 使用 ESP8266 + ATmega32u4
 
-![image of my DIY Wi-Fi Duck](https://raw.githubusercontent.com/spacehuhn/wifi_ducky/master/images/my_wifi_duck.jpg)
+移除在线资源优化页面打开速度
+
  
-**Support me and my projects on [Patreon!](https://www.patreon.com/spacehuhn)**  
-[<img width="200" alt="Support me on Patreon" src="https://raw.githubusercontent.com/spacehuhn/wifi_ducky/master/images/patreon.png">](https://www.patreon.com/spacehuhn)  
-
 
 ## Contents
 - [Introduction](#introduction)
