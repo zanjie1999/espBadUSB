@@ -91,6 +91,7 @@ void setup() {
   
   Serial.begin(BAUD_RATE);
   ExternSerial.begin(BAUD_RATE);
+  Serial1.begin(BAUD_RATE);
 
   pinMode(13,OUTPUT);
   digitalWrite(13,HIGH);
@@ -99,6 +100,13 @@ void setup() {
 }
 
 void loop() {
+  if(Serial1.available()){
+    Serial.write((uint8_t)Serial1.read());
+  }
+  if(Serial.available()){
+    Serial1.write((uint8_t)Serial.read());
+  }
+
   if(ExternSerial.available()) {
     bufferStr = ExternSerial.readStringUntil("END");
     Serial.println(bufferStr);
