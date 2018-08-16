@@ -1,7 +1,10 @@
 #include <Keyboard.h>
 #define BAUD_RATE 57200
+#define FLASH_PIN 5
 
 #define ExternSerial Serial1
+
+boolean isFlash = false;
 
 String bufferStr = "";
 String last = "";
@@ -11,38 +14,38 @@ int defaultDelay = 0;
 void Line(String _line)
 {
   int firstSpace = _line.indexOf(" ");
-  if(firstSpace == -1) Press(_line);
-  else if(_line.substring(0,firstSpace) == "STRING"){
-    for(int i=firstSpace+1;i<_line.length();i++) Keyboard.write(_line[i]);
+  if (firstSpace == -1) Press(_line);
+  else if (_line.substring(0, firstSpace) == "STRING") {
+    for (int i = firstSpace + 1; i < _line.length(); i++) Keyboard.write(_line[i]);
   }
-  else if(_line.substring(0,firstSpace) == "DELAY"){
+  else if (_line.substring(0, firstSpace) == "DELAY") {
     int delaytime = _line.substring(firstSpace + 1).toInt();
     delay(delaytime);
   }
-  else if(_line.substring(0,firstSpace) == "DEFAULTDELAY") defaultDelay = _line.substring(firstSpace + 1).toInt();
-  else if(_line.substring(0,firstSpace) == "REM"){} //nothing :/
-  else if(_line.substring(0,firstSpace) == "REPLAY") {
+  else if (_line.substring(0, firstSpace) == "DEFAULTDELAY") defaultDelay = _line.substring(firstSpace + 1).toInt();
+  else if (_line.substring(0, firstSpace) == "REM") {} //nothing :/
+  else if (_line.substring(0, firstSpace) == "REPLAY") {
     int replaynum = _line.substring(firstSpace + 1).toInt();
-    while(replaynum)
+    while (replaynum)
     {
       Line(last);
       --replaynum;
     }
-  } else{
-      String remain = _line;
+  } else {
+    String remain = _line;
 
-      while(remain.length() > 0){
-        int latest_space = remain.indexOf(" ");
-        if (latest_space == -1){
-          Press(remain);
-          remain = "";
-        }
-        else{
-          Press(remain.substring(0, latest_space));
-          remain = remain.substring(latest_space + 1);
-        }
-        delay(5);
+    while (remain.length() > 0) {
+      int latest_space = remain.indexOf(" ");
+      if (latest_space == -1) {
+        Press(remain);
+        remain = "";
       }
+      else {
+        Press(remain.substring(0, latest_space));
+        remain = remain.substring(latest_space + 1);
+      }
+      delay(5);
+    }
   }
 
   Keyboard.releaseAll();
@@ -50,8 +53,8 @@ void Line(String _line)
 }
 
 
-void Press(String b){
-  if(b.length() == 1) Keyboard.press(char(b[0]));
+void Press(String b) {
+  if (b.length() == 1) Keyboard.press(char(b[0]));
   else if (b.equals("ENTER")) Keyboard.press(KEY_RETURN);
   else if (b.equals("CTRL")) Keyboard.press(KEY_LEFT_CTRL);
   else if (b.equals("SHIFT")) Keyboard.press(KEY_LEFT_SHIFT);
@@ -88,52 +91,54 @@ void Press(String b){
 }
 
 void setup() {
-  
+  Keyboard.begin();
   Serial.begin(BAUD_RATE);
   ExternSerial.begin(BAUD_RATE);
-  Serial1.begin(BAUD_RATE);
-
-  pinMode(13,OUTPUT);
-  digitalWrite(13,HIGH);
-
-  Keyboard.begin();
+  pinMode(FLASH_PIN, INPUT);
+  
+  isFlash = !digitalRead(FLASH_PIN);
 }
 
 void loop() {
-  if(Serial1.available()){
-    Serial.write((uint8_t)Serial1.read());
-  }
-  if(Serial.available()){
-    Serial1.write((uint8_t)Serial.read());
-  }
+  if (isFlash) {
+    while (ExternSerial.available()) {
+      Serial.write((uint8_t)ExternSerial.read());
+    }
 
-  if(ExternSerial.available()) {
-    bufferStr = ExternSerial.readStringUntil("END");
-    Serial.println(bufferStr);
-  }
-  
-  if(bufferStr.length() > 0){
-    
-    bufferStr.replace("\r","\n");
-    bufferStr.replace("\n\n","\n");
-    
-    while(bufferStr.length() > 0){
-      int latest_return = bufferStr.indexOf("\n");
-      if(latest_return == -1){
-        Serial.println("run: "+bufferStr);
-        Line(bufferStr);
-        bufferStr = "";
-      } else{
-        Serial.println("run: '"+bufferStr.substring(0, latest_return)+"'");
-        Line(bufferStr.substring(0, latest_return));
-        last=bufferStr.substring(0, latest_return);
-        bufferStr = bufferStr.substring(latest_return + 1);
+    if (Serial.available()) {
+      while (Serial.available()) {
+        ExternSerial.write((uint8_t)Serial.read());
       }
     }
-    
-    bufferStr = "";
-    ExternSerial.write(0x99);
-    Serial.println("done");
+  } else {
+    if (ExternSerial.available()) {
+      bufferStr = ExternSerial.readStringUntil("END");
+      Serial.println(bufferStr);
+    }
+
+    if (bufferStr.length() > 0) {
+
+      bufferStr.replace("\r", "\n");
+      bufferStr.replace("\n\n", "\n");
+
+      while (bufferStr.length() > 0) {
+        int latest_return = bufferStr.indexOf("\n");
+        if (latest_return == -1) {
+          Serial.println("run: " + bufferStr);
+          Line(bufferStr);
+          bufferStr = "";
+        } else {
+          Serial.println("run: '" + bufferStr.substring(0, latest_return) + "'");
+          Line(bufferStr.substring(0, latest_return));
+          last = bufferStr.substring(0, latest_return);
+          bufferStr = bufferStr.substring(latest_return + 1);
+        }
+      }
+
+      bufferStr = "";
+      ExternSerial.write(0x99);
+      Serial.println("done");
+    }
   }
 }
 
