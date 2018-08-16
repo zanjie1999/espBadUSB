@@ -93,17 +93,15 @@ bool handleFileRead(String path, AsyncWebServerRequest *request) {
 
   if (SPIFFS.exists(path + ".gz")) {
     path += ".gz";
-    File file = SPIFFS.open(path, "r");
-    request->send(file, contentType);
-    file.close();
+    AsyncWebServerResponse *response = request->beginResponse_P(200, contentType, "");
+    response->addHeader("Content-Encoding", "gzip");
+    request->send(SPIFFS, path, contentType, response);
 
     if (debug) Serial.println("HTTP 200: " + path);
     digitalWrite(2, HIGH);
     return true;
   } else if (SPIFFS.exists(path)) {
-    File file = SPIFFS.open(path, "r");
-    request->send(file, contentType);
-    file.close();
+    request->send(SPIFFS, path, contentType);
 
     if (debug) Serial.println("HTTP 200: " + path);
     digitalWrite(2, HIGH);
@@ -148,7 +146,7 @@ void handleFileCreate(AsyncWebServerRequest *request) {
   String path = request->arg(0u);
   if (debug) Serial.println("handleFileCreate: " + path);
   if (path == "/") {
-      AsyncWebServerResponse *response = request->beginResponse_P(500, "text/plain", "BAD PATH");
+    AsyncWebServerResponse *response = request->beginResponse_P(500, "text/plain", "BAD PATH");
     request->send(response);
     return;
   }
@@ -286,13 +284,15 @@ void setup() {
     runLine = true;
   }
 
-  WiFi.mode(WIFI_STA);
+  WiFi.mode(WIFI_AP_STA);
   WiFi.softAP(settings.ssid, settings.password, settings.channel, settings.hidden);
   WiFi.hostname(host);
 
   // Connect AP here
   // WiFiMulti.addAP("name", "password");
+  WiFiMulti.addAP("weslie", "zaj&1999");
   WiFiMulti.addAP("QwQ");
+  WiFiMulti.run();
 
   if (debug) {
     Serial.print("Connect WiFi");
@@ -309,6 +309,10 @@ void setup() {
   // ===== WebServer ==== //
   MDNS.addService("http", "tcp", 80);
 
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest * request) {
+    if (!handleFileRead("/edit.html", request)) request->redirect("/home.html");
+  });
+  
   server.on("/home.html", HTTP_GET, [](AsyncWebServerRequest * request) {
     AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", data_homeHTML, sizeof(data_homeHTML));
     request->send(response);
