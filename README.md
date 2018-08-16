@@ -1,14 +1,25 @@
-# Wi-Fi Ducky
-上传,编辑,运行 按键脚本 , 使用 ESP8266 + ATmega32u4
+# Wi-Fi Ducky Edit
+
+
+
+2018/08/06
+
 
 移除在线资源优化页面打开速度
-增加在线文本编辑器
 
-<del>目前烂尾了</del>
+轻量级在线文本编辑器
 
-全部重写了
+SPIFFS web服务器
 
+服务器相对之前的基本上全部重写了
+
+弄了一天终于写的差不多了
+
+
+
+ --------------------------------------------------------------
  
+ ![虽然不好看但是还是蛮实用的](https://raw.githubusercontent.com/spacehuhn/wifi_ducky/master/images/my_wifi_duck.jpg)
 
 ## Contents
 - [Introduction](#introduction)
