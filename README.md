@@ -183,30 +183,3 @@ How to write Ducky Scripts: https://github.com/hak5darren/USB-Rubber-Ducky/wiki/
 
 
 Happy hacking :)
-
-## Improvements
-
-My wishlist:
-- add support for Digispark (ATtiny85) as alternative for the ATmega32u4 Arduino
-- change settings within the web interface (Wi-Fi SSID, password etc.)
-- full support of all Ducky Script commands (DEFAULTDELAY is missing)
-- auto execute scripts
-- add mouse
-- control over the internet
-
-## License
-
-This project is licensed under the MIT License - see the [license file](LICENSE) file for details
-
-## Sources and additional Links
-
-The USB Rubber Ducky: https://hakshop.com/products/usb-rubber-ducky-deluxe
-
-The Malduino (a BadUSB-Arduino/Rubber-Ducky-alternative by Seytonic): https://www.indiegogo.com/projects/malduino-badusb-arduino-usb#/
-
-Seytonic: http://youtube.com/seytonic
-          https://github.com/seytonic
-
-Arduino Ducky Script interpreter: https://github.com/Seytonic/Duckduino-microSD
-
-Cnlohrs ESP8266 USB Software Driver: https://github.com/cnlohr/espusb
