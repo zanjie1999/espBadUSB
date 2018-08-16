@@ -19,7 +19,7 @@ SPIFFS web服务器
 
  --------------------------------------------------------------
  
- ![虽然不好看但是还是蛮实用的](https://raw.githubusercontent.com/spacehuhn/wifi_ducky/master/images/my_wifi_duck.jpg)
+ ![虽然不好看但是还是蛮实用的](https://raw.githubusercontent.com/zanjie1999/wifi_ducky_edit/master/images/my_wifi_duck.jpg)
 
 ## Contents
 - [Introduction](#introduction)
