@@ -2,7 +2,7 @@
 #include <FS.h>
 #include <ESP8266mDNS.h>
 #include <ESPAsyncTCP.h>
-#include <ESP8266WebServer.h>
+#include <ESPAsyncWebServer.h>
 #include <SPIFFSEditor.h>
 #include <EEPROM.h>
 #include "data.h"
@@ -22,12 +22,10 @@ const char *password = "password"; //min 8 chars
 const char *host = "ESP";
 /* ============= ======================= ============= */
 
-ESP8266WebServer server(80);
+AsyncWebServer server(80);
+
 FSInfo fs_info;
-File fsUploadFile;
-
 Settings settings;
-
 bool shouldReboot = false;
 
 //Web stuff
@@ -41,7 +39,6 @@ extern const uint8_t data_nomalizeCSS[] PROGMEM;
 extern const uint8_t data_skeletonCSS[] PROGMEM;
 extern const uint8_t data_settingsHTML[] PROGMEM;
 extern const uint8_t data_viewHTML[] PROGMEM;
-extern const uint8_t data_editHTML[] PROGMEM;
 
 extern String formatBytes(size_t bytes);
 
@@ -56,8 +53,8 @@ int bc = 0; //buffer counter
 int lc = 0; //line buffer counter
 
 
-String getContentType(String filename) {
-  if (server.hasArg("download"))
+String getContentType(String filename, AsyncWebServerRequest *request) {
+  if (request->hasArg("download"))
     return "application/octet-stream";
   else if (filename.endsWith(".htm"))
     return "text/html";
@@ -86,18 +83,18 @@ String getContentType(String filename) {
   return "text/plain";
 }
 
-bool handleFileRead(String path) {
+bool handleFileRead(String path, AsyncWebServerRequest *request) {
   digitalWrite(2, LOW);
   if (path.endsWith("/")) {
     path += "index.html";
   }
 
-  String contentType = getContentType(path);
+  String contentType = getContentType(path, request);
 
   if (SPIFFS.exists(path + ".gz")) {
     path += ".gz";
     File file = SPIFFS.open(path, "r");
-    server.streamFile(file, contentType);
+    request->send(file, contentType);
     file.close();
 
     if (debug) Serial.println("HTTP 200: " + path);
@@ -105,7 +102,7 @@ bool handleFileRead(String path) {
     return true;
   } else if (SPIFFS.exists(path)) {
     File file = SPIFFS.open(path, "r");
-    server.streamFile(file, contentType);
+    request->send(file, contentType);
     file.close();
 
     if (debug) Serial.println("HTTP 200: " + path);
@@ -117,64 +114,70 @@ bool handleFileRead(String path) {
   return false;
 }
 
-void handleFileUpload() {
-  if (server.uri() != "/edit") return;
-  HTTPUpload& upload = server.upload();
-  if (upload.status == UPLOAD_FILE_START) {
-    String filename = upload.filename;
-    if (!filename.startsWith("/")) filename = "/" + filename;
-    if (debug) Serial.print("handleFileUpload Name: "); Serial.println(filename);
-    fsUploadFile = SPIFFS.open(filename, "w");
-    filename = String();
-  } else if (upload.status == UPLOAD_FILE_WRITE) {
-    //Serial.print("handleFileUpload Data: "); Serial.println(upload.currentSize);
-    if (fsUploadFile)
-      fsUploadFile.write(upload.buf, upload.currentSize);
-  } else if (upload.status == UPLOAD_FILE_END) {
-    if (fsUploadFile)
-      fsUploadFile.close();
-    if (debug) Serial.print("handleFileUpload Size: "); if (debug) Serial.println(upload.totalSize);
+void handleFileDelete(AsyncWebServerRequest *request) {
+  if (request->args() == 0) {
+    AsyncWebServerResponse *response = request->beginResponse_P(500, "text/plain", "BAD ARGS");
+    request->send(response);
+    return;
   }
-}
-
-void handleFileDelete() {
-  if (server.args() == 0) return server.send(500, "text/plain", "BAD ARGS");
-  String path = server.arg(0);
+  String path = request->arg(0u);
   if (debug) Serial.println("handleFileDelete: " + path);
-  if (path == "/")
-    return server.send(500, "text/plain", "BAD PATH");
-  if (!SPIFFS.exists(path))
-    return server.send(404, "text/plain", "FileNotFound");
-  SPIFFS.remove(path);
-  server.send(200, "text/plain", "");
-  path = String();
-}
-
-void handleFileCreate() {
-  if (server.args() == 0)
-    return server.send(500, "text/plain", "BAD ARGS");
-  String path = server.arg(0);
-  if (debug) Serial.println("handleFileCreate: " + path);
-  if (path == "/")
-    return server.send(500, "text/plain", "BAD PATH");
-  if (SPIFFS.exists(path))
-    return server.send(500, "text/plain", "FILE EXISTS");
-  File file = SPIFFS.open(path, "w");
-  if (file)
-    file.close();
-  else
-    return server.send(500, "text/plain", "CREATE FAILED");
-  server.send(200, "text/plain", "");
-  path = String();
-}
-
-void handleFileList() {
-  if (!server.hasArg("dir")) {
-    server.send(500, "text/plain", "BAD ARGS");
+  if (path == "/") {
+    AsyncWebServerResponse *response = request->beginResponse_P(500, "text/plain", "BAD PATH");
+    request->send(response);
     return;
   }
 
-  String path = server.arg("dir");
+  if (!SPIFFS.exists(path)) {
+    AsyncWebServerResponse *response = request->beginResponse_P(404, "text/plain", "FileNotFound");
+    request->send(response);
+  }
+  SPIFFS.remove(path);
+  AsyncWebServerResponse *response = request->beginResponse_P(200, "text/plain", "");
+  request->send(response);
+  path = String();
+}
+
+void handleFileCreate(AsyncWebServerRequest *request) {
+  if (request->args() == 0) {
+    AsyncWebServerResponse *response = request->beginResponse_P(500, "text/plain", "BAD ARGS");
+    request->send(response);
+    return;
+  }
+
+  String path = request->arg(0u);
+  if (debug) Serial.println("handleFileCreate: " + path);
+  if (path == "/") {
+      AsyncWebServerResponse *response = request->beginResponse_P(500, "text/plain", "BAD PATH");
+    request->send(response);
+    return;
+  }
+  if (SPIFFS.exists(path)) {
+    AsyncWebServerResponse *response = request->beginResponse_P(500, "text/plain", "FILE EXISTS");
+    request->send(response);
+    return;
+  }
+  File file = SPIFFS.open(path, "w");
+  if (file)
+    file.close();
+  else {
+    AsyncWebServerResponse *response = request->beginResponse_P(500, "text/plain", "BAD ARGS");
+    request->send(response);
+    return;
+  }
+  AsyncWebServerResponse *response = request->beginResponse_P(200, "text/plain", "");
+  request->send(response);
+  path = String();
+}
+
+void handleFileList(AsyncWebServerRequest *request) {
+  if (!request->hasArg("dir")) {
+    AsyncWebServerResponse *response = request->beginResponse_P(500, "text/plain", "BAD ARGS");
+    request->send(response);
+    return;
+  }
+
+  String path = request->arg("dir");
   if (debug) Serial.println("handleFileList: " + path);
   Dir dir = SPIFFS.openDir(path);
   path = String();
@@ -193,7 +196,7 @@ void handleFileList() {
   }
 
   output += "]";
-  server.send(200, "text/json", output);
+  request->send(200, "text/json", output);
 }
 
 
@@ -214,8 +217,9 @@ void handleUpload(AsyncWebServerRequest *request, String filename, size_t index,
   }
 }
 
-void send404() {
-  server.send(404, "text/html", "<h1>Oops!</h1><h2>404 NotFound</h2>");
+void send404(AsyncWebServerRequest *request) {
+  AsyncWebServerResponse *response = request->beginResponse_P(404, "text/html", "<h1>Oops!</h1><h2>404 NotFound</h2>");
+  request->send(response);
 }
 
 void sendToIndex(AsyncWebServerRequest *request) {
@@ -237,9 +241,9 @@ void setup() {
   Serial.begin(BAUD_RATE);
 
   if (debug) {
-      uint32_t realSize = ESP.getFlashChipRealSize();
-  uint32_t ideSize = ESP.getFlashChipSize();
-  FlashMode_t ideMode = ESP.getFlashChipMode();
+    uint32_t realSize = ESP.getFlashChipRealSize();
+    uint32_t ideSize = ESP.getFlashChipSize();
+    FlashMode_t ideMode = ESP.getFlashChipMode();
     Serial.println("Debug:");
     Serial.printf("Flash real id:   %08X\r\n", ESP.getFlashChipId());
     Serial.printf("Flash real size: %u\r\n", realSize);
@@ -305,8 +309,9 @@ void setup() {
   // ===== WebServer ==== //
   MDNS.addService("http", "tcp", 80);
 
-  server.on("/home.html", HTTP_GET, [](){
-   server.send(200, "text/html", data_homeHTML);
+  server.on("/home.html", HTTP_GET, [](AsyncWebServerRequest * request) {
+    AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", data_homeHTML, sizeof(data_homeHTML));
+    request->send(response);
   });
 
   server.on("/live.html", HTTP_GET, [](AsyncWebServerRequest * request) {
@@ -479,10 +484,6 @@ void setup() {
     sendToIndex(request);
   }, handleUpload);
 
-  server.onNotFound([](AsyncWebServerRequest * request) {
-    send404(request);
-  });
-
   server.on("/update", HTTP_GET, [](AsyncWebServerRequest * request) {
     AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "");
     response->addHeader("Location", "/info.html");
@@ -531,8 +532,7 @@ void setup() {
   server.on("/list", HTTP_GET, handleFileList);
   //load editor
   server.on("/edit", HTTP_GET, [](AsyncWebServerRequest * request) {
-    AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", data_infoHTML, sizeof(data_editHTML));
-    request->send(response);
+    if (!handleFileRead("/edit.html", request)) send404(request);
   });
   //create file
   server.on("/edit", HTTP_PUT, handleFileCreate);
@@ -540,13 +540,14 @@ void setup() {
   server.on("/edit", HTTP_DELETE, handleFileDelete);
   //first callback is called after the request has ended with all parsed arguments
   //second callback handles file uploads at that location
-  server.on("/edit", HTTP_POST, []() {
-    server.send(200, "text/plain", "");
-  }, handleFileUpload);
+  server.on("/edit", HTTP_POST, [](AsyncWebServerRequest * request) {
+    AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", "");
+    request->send(response);
+  }, handleUpload);
 
-  server.onNotFound([]() {
-    if (!handleFileRead(server.uri())) {
-      server.send(404, "text/html", "<h1>Oops!</h1><h2>404 NotFound</h2>");
+  server.onNotFound([](AsyncWebServerRequest * request) {
+    if (!handleFileRead(request->url(), request)) {
+      send404(request);
     }
   });
 
