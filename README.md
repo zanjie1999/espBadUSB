@@ -1,5 +1,12 @@
 # Wi-Fi Ducky Edit
 
+2018/08/22
+
+发现传错文件
+
+加了一个/all的功能
+
+还留了一个/wifi的坑
 
 
 2018/08/06
@@ -19,7 +26,7 @@ SPIFFS web服务器
 
  --------------------------------------------------------------
  
- ![虽然不好看但是还是蛮实用的](https://raw.githubusercontent.com/zanjie1999/wifi_ducky_edit/master/images/my_wifi_duck.jpg)
+ ![虽然不好看但是还是蛮实用的](https://raw.githubusercontent.com/spacehuhn/wifi_ducky/master/images/my_wifi_duck.jpg)
 
 ## Contents
 - [Introduction](#introduction)
@@ -104,7 +111,7 @@ So make your hardware choices!
 Also I wouldn't go straight forward and solder everything together. Test it beforehand, otherwise debugging can be hard!
 
 **For an easy start, better debugging, further development or if you just wanna test this project, I recommend using a Nodemcu + an Arduino Leonardo:**
-![nodemcu with a leonardo as wifi duck](https://raw.githubusercontent.com/spacehuhn/wifi_ducky/master/images/leonardo_duck_1.jpg)
+![nodemcu with a leonardo as wifi duck](https://raw.githubusercontent.com/zanjie1999/espUSB/master/images/leonardo_duck_1.jpg)
 This is easy to setup, you don't need any soldering skills and you can still use both the NodeMCU and the Arduino for other cool projects.
 
 
@@ -123,7 +130,7 @@ You could also use your Arduino to flash it: https://gist.github.com/spacehuhn/b
 (The connections are the same for this project, the only difference is that you need to set GPIO-0 to LOW to enabling a firmware update).
 
 **Flash the .bin File**  
-Go to [releases](https://github.com/spacehuhn/wifi_ducky/releases) and download the right bin file for your ESP8266.  
+Go to [releases](https://github.com/zanjie1999/espUSB/releases) and download the right bin file for your ESP8266.  
 You can flash it with the [esptool](https://github.com/espressif/esptool) or the [nodemcu-flasher](https://github.com/nodemcu/nodemcu-flasher).
 
 **Upload using Arduino**  
@@ -173,7 +180,7 @@ Go to `192.168.4.1/update` and upload the new .bin file.
 Plug your Wi-Fi Ducky in and connect to the new Wi-Fi network `WiFi Duck`. The password is `quackquack`.  
 Open your browser and go to `192.168.4.1`. 
 
-![screenshot of the webinterface](https://raw.githubusercontent.com/spacehuhn/wifi_ducky/master/images/wifiduck_screenshot_1.jpg)
+![screenshot of the webinterface](https://raw.githubusercontent.com/zanjie1999/espUSB/master/images/wifiduck_screenshot_1.jpg)
 
 There you can now upload, view, delete and run new Ducky Scripts.
 
