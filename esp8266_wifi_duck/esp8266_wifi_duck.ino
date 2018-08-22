@@ -19,7 +19,7 @@ ESP8266WiFiMulti WiFiMulti;
 /* ============= CHANGE WIFI CREDENTIALS ============= */
 const char *ssid = "Sparkle";
 const char *password = "password"; //min 8 chars
-const char *host = "ESP";
+const char *host = "espUSB";
 /* ============= ======================= ============= */
 
 AsyncWebServer server(80);
@@ -93,9 +93,9 @@ bool handleFileRead(String path, AsyncWebServerRequest *request) {
 
   if (SPIFFS.exists(path + ".gz")) {
     path += ".gz";
-    AsyncWebServerResponse *response = request->beginResponse_P(200, contentType, "");
+    AsyncWebServerResponse *response = request->beginResponse(SPIFFS, path, contentType);
     response->addHeader("Content-Encoding", "gzip");
-    request->send(SPIFFS, path, contentType, response);
+    request->send(response);
 
     if (debug) Serial.println("HTTP 200: " + path);
     digitalWrite(2, HIGH);
@@ -285,23 +285,24 @@ void setup() {
   }
 
   WiFi.mode(WIFI_AP_STA);
-  WiFi.softAP(settings.ssid, settings.password, settings.channel, settings.hidden);
   WiFi.hostname(host);
 
   // Connect AP here
   // WiFiMulti.addAP("name", "password");
-  WiFiMulti.addAP("weslie", "zaj&1999");
   WiFiMulti.addAP("QwQ");
-  WiFiMulti.run();
-
-  if (debug) {
-    Serial.print("Connect WiFi");
-    while (WiFiMulti.run() != WL_CONNECTED) {
-      delay(500);
-      Serial.print(".");
+  if (debug) Serial.print("Connect WiFi");
+  int tryNum = 0;
+  while (WiFiMulti.run() != WL_CONNECTED) {
+    if (tryNum > 10) {
+      WiFi.softAP(settings.ssid, settings.password, settings.channel, settings.hidden);
+      break;
     }
+    delay(500);
+    if (debug) Serial.print(".");
+    tryNum++;
+  }
+  if (debug) {
     Serial.print("\r\n");
-
     Serial.print("IP address: ");
     Serial.println(WiFi.localIP());
   }
@@ -310,9 +311,9 @@ void setup() {
   MDNS.addService("http", "tcp", 80);
 
   server.on("/", HTTP_GET, [](AsyncWebServerRequest * request) {
-    if (!handleFileRead("/edit.html", request)) request->redirect("/home.html");
+    if (!handleFileRead("/index.html", request)) request->redirect("/home.html");
   });
-  
+
   server.on("/home.html", HTTP_GET, [](AsyncWebServerRequest * request) {
     AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", data_homeHTML, sizeof(data_homeHTML));
     request->send(response);
@@ -548,6 +549,33 @@ void setup() {
     AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", "");
     request->send(response);
   }, handleUpload);
+
+  server.on("/all", HTTP_GET, [](AsyncWebServerRequest * request) {
+    String json = "{";
+    json += "\"heap\":" + String(ESP.getFreeHeap());
+    json += ", \"analog\":" + String(analogRead(A0));
+    //    json += ", \"gpio\":" + String((uint32_t)(((GPI | GPO) & 0xFFFF) | ((GP16I & 0x01) << 16)));
+    json += "}";
+    request->send(200, "text/json", json);
+    json = String();
+  });
+
+  server.on("/wifi", HTTP_GET, [](AsyncWebServerRequest * request) {
+    String json = "{";
+    json += "\"connnnect\":" + String(WiFiMulti.run() == WL_CONNECTED);
+    json += ", \"ip\":\"" + String(WiFi.localIP()) + "\"";
+    json += ", \"scan\":[";
+    int n = WiFi.scanNetworks();
+    for (int i=0;i< n;i++){
+      json += "{\"ssid\":\"" +String(WiFi.SSID(i))+",\"rssi\":\""+String(WiFi.SSID(i))+"\"}";
+      if (i< n-1){
+        json += ",";
+      }
+    }
+    json += "]}";
+    request->send(200, "text/json", json);
+    json = String();
+  });
 
   server.onNotFound([](AsyncWebServerRequest * request) {
     if (!handleFileRead(request->url(), request)) {
