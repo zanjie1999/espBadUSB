@@ -23,6 +23,15 @@ SPIFFS web服务器
 弄了一天终于写的差不多了
 
 
+2018/11/20
+
+把pro micro腾出来做arduboy
+
+然后更新了一下硬件 更薄更短更方便
+
+![反面](https://raw.githubusercontent.com/zanjie1999/espUSB/master/images/my_duck_update1.jpg)
+
+![正面](https://raw.githubusercontent.com/zanjie1999/espUSB/master/images/my_duck_update2.jpg)
 
  --------------------------------------------------------------
  
