@@ -1,6 +1,6 @@
 #include <Keyboard.h>
 #define BAUD_RATE 57200
-#define FLASH_PIN 5
+#define FLASH_PIN A0
 
 #define ExternSerial Serial1
 
@@ -94,24 +94,33 @@ void setup() {
   Keyboard.begin();
   Serial.begin(BAUD_RATE);
   ExternSerial.begin(BAUD_RATE);
-  pinMode(FLASH_PIN, INPUT);
-  
+  pinMode(FLASH_PIN, INPUT_PULLUP);
+  pinMode(LED_BUILTIN, OUTPUT);
+
   isFlash = !digitalRead(FLASH_PIN);
+  if (isFlash) {
+    digitalWrite(LED_BUILTIN, HIGH);
+  }
 }
 
 void loop() {
   if (isFlash) {
     while (ExternSerial.available()) {
+      digitalWrite(LED_BUILTIN, LOW);
       Serial.write((uint8_t)ExternSerial.read());
+      digitalWrite(LED_BUILTIN, HIGH);
     }
 
     if (Serial.available()) {
       while (Serial.available()) {
+        digitalWrite(LED_BUILTIN, LOW);
         ExternSerial.write((uint8_t)Serial.read());
+        digitalWrite(LED_BUILTIN, HIGH);
       }
     }
   } else {
     if (ExternSerial.available()) {
+      digitalWrite(LED_BUILTIN, HIGH);
       bufferStr = ExternSerial.readStringUntil("END");
       Serial.println(bufferStr);
     }
@@ -138,6 +147,7 @@ void loop() {
       bufferStr = "";
       ExternSerial.write(0x99);
       Serial.println("done");
+      digitalWrite(LED_BUILTIN, LOW);
     }
   }
 }
