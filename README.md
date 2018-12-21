@@ -4,6 +4,17 @@
 
 添加了一个叫 TEXT 的指令, 后面的任何东西直到结束都会直接输入
 
+举个例子,运行:
+
+    TEXT
+    Hey Sparkle
+    You created this incredible thing
+    
+会输入
+
+    Hey Sparkle
+    You created this incredible thing
+
 2018/08/22
 
 发现传错文件
