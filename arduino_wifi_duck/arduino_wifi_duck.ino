@@ -95,11 +95,11 @@ void setup() {
   Serial.begin(BAUD_RATE);
   ExternSerial.begin(BAUD_RATE);
   pinMode(LED_BUILTIN, OUTPUT);
-  digitalWrite(FLASH_PIN,HIGH);
-  pinMode(FLASH_PIN,INPUT_PULLUP);
+  digitalWrite(FLASH_PIN, HIGH);
+  pinMode(FLASH_PIN, INPUT_PULLUP);
   delay(500);
   isFlash = analogRead(FLASH_PIN) < 100;
-  pinMode(FLASH_PIN,INPUT);
+  pinMode(FLASH_PIN, INPUT);
   if (isFlash) {
     digitalWrite(LED_BUILTIN, HIGH);
   }
@@ -132,17 +132,21 @@ void loop() {
       bufferStr.replace("\r", "\n");
       bufferStr.replace("\n\n", "\n");
 
-      while (bufferStr.length() > 0) {
-        int latest_return = bufferStr.indexOf("\n");
-        if (latest_return == -1) {
-          Serial.println("run: " + bufferStr);
-          Line(bufferStr);
-          bufferStr = "";
-        } else {
-          Serial.println("run: '" + bufferStr.substring(0, latest_return) + "'");
-          Line(bufferStr.substring(0, latest_return));
-          last = bufferStr.substring(0, latest_return);
-          bufferStr = bufferStr.substring(latest_return + 1);
+      if (bufferStr.startsWith("TEXT\n")) {
+        for (int i = bufferStr.indexOf("\n") + 1; i < bufferStr.length(); i++) Keyboard.write(bufferStr[i]);
+      } else {
+        while (bufferStr.length() > 0) {
+          int latest_return = bufferStr.indexOf("\n");
+          if (latest_return == -1) {
+            Serial.println("run: " + bufferStr);
+            Line(bufferStr);
+            bufferStr = "";
+          } else {
+            Serial.println("run: '" + bufferStr.substring(0, latest_return) + "'");
+            Line(bufferStr.substring(0, latest_return));
+            last = bufferStr.substring(0, latest_return);
+            bufferStr = bufferStr.substring(latest_return + 1);
+          }
         }
       }
 
