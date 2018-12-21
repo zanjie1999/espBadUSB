@@ -14,6 +14,8 @@
 
     Hey Sparkle
     You created this incredible thing
+   
+写shell脚本的时候特别爽,大大的减少了脚本的容量
 
 2018/08/22
 
