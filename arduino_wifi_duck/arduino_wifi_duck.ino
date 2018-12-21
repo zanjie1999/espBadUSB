@@ -94,10 +94,12 @@ void setup() {
   Keyboard.begin();
   Serial.begin(BAUD_RATE);
   ExternSerial.begin(BAUD_RATE);
-  pinMode(FLASH_PIN, INPUT);
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(FLASH_PIN,HIGH);
-  isFlash = !digitalRead(FLASH_PIN);
+  pinMode(FLASH_PIN,INPUT_PULLUP);
+  delay(500);
+  isFlash = analogRead(FLASH_PIN) < 100;
+  pinMode(FLASH_PIN,INPUT);
   if (isFlash) {
     digitalWrite(LED_BUILTIN, HIGH);
   }
