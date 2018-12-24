@@ -1,55 +1,84 @@
 #include <Keyboard.h>
+#include <Mouse.h>
+#include <FingerprintUSBHost.h>
+
 #define BAUD_RATE 57200
 #define FLASH_PIN A0
 
 #define ExternSerial Serial1
 
 boolean isFlash = false;
-
+String os = "";
 String bufferStr = "";
 String last = "";
-
 int defaultDelay = 0;
 
-void Line(String _line)
-{
+boolean dontwrite = false;
+boolean textmode = false;
+
+void Line(String _line) {
   int firstSpace = _line.indexOf(" ");
-  if (firstSpace == -1) Press(_line);
-  else if (_line.substring(0, firstSpace) == "STRING") {
-    for (int i = firstSpace + 1; i < _line.length(); i++) Keyboard.write(_line[i]);
-  }
-  else if (_line.substring(0, firstSpace) == "DELAY") {
-    int delaytime = _line.substring(firstSpace + 1).toInt();
-    delay(delaytime);
-  }
-  else if (_line.substring(0, firstSpace) == "DEFAULTDELAY") defaultDelay = _line.substring(firstSpace + 1).toInt();
-  else if (_line.substring(0, firstSpace) == "REM") {} //nothing :/
-  else if (_line.substring(0, firstSpace) == "REPLAY") {
-    int replaynum = _line.substring(firstSpace + 1).toInt();
-    while (replaynum)
-    {
-      Line(last);
-      --replaynum;
-    }
-  } else {
-    String remain = _line;
 
-    while (remain.length() > 0) {
-      int latest_space = remain.indexOf(" ");
-      if (latest_space == -1) {
-        Press(remain);
-        remain = "";
-      }
-      else {
-        Press(remain.substring(0, latest_space));
-        remain = remain.substring(latest_space + 1);
-      }
-      delay(5);
+  if (firstSpace == -1) {
+    if (_line.equals("TEXT")) {
+      textmode = true;
+    } else if (_line.equals("OSEND")) {
+      dontwrite = false;
     }
+  } else if (_line.substring(0, firstSpace) == "OS") {
+    dontwrite = true;
+    if (_line.substring(firstSpace + 1) == os) dontwrite = false;
   }
 
-  Keyboard.releaseAll();
-  delay(defaultDelay);
+  if (!dontwrite) {
+    if (firstSpace == -1)  Press(_line);
+    else if (_line.substring(0, firstSpace) == "STRING") {
+      for (int i = firstSpace + 1; i < _line.length(); i++) Keyboard.write(_line[i]);
+    } else if (_line.substring(0, firstSpace) == "ASCII") {
+      Keyboard.write(_line.substring(firstSpace + 1).toInt());
+    } else if (_line.substring(0, firstSpace) == "SCROLL") {
+      Mouse.move(0, 0, _line.substring(firstSpace + 1).toInt());
+    } else if (_line.substring(0, firstSpace) == "MOUSEX") {
+      Mouse.move(_line.substring(firstSpace + 1).toInt(), 0);
+    } else if (_line.substring(0, firstSpace) == "MOUSEY") {
+      Mouse.move(0, _line.substring(firstSpace + 1).toInt());
+    } else if (_line.substring(0, firstSpace) == "MOUSE") {
+      int index = _line.indexOf(" ", firstSpace + 1);
+      Mouse.move(_line.substring(firstSpace + 1).toInt(), _line.substring(index + 1).toInt());
+    } else if (_line.substring(0, firstSpace) == "DELAY") {
+      int delaytime = _line.substring(firstSpace + 1).toInt();
+      delay(delaytime);
+    }
+    else if (_line.substring(0, firstSpace) == "DEFAULTDELAY") defaultDelay = _line.substring(firstSpace + 1).toInt();
+    else if (_line.substring(0, firstSpace) == "REM") {} //nothing :/
+    else if (_line.substring(0, firstSpace) == "REPLAY") {
+      int replaynum = _line.substring(firstSpace + 1).toInt();
+      while (replaynum)
+      {
+        Line(last);
+        --replaynum;
+      }
+    } else {
+      String remain = _line;
+
+      while (remain.length() > 0) {
+        int latest_space = remain.indexOf(" ");
+        if (latest_space == -1) {
+          Press(remain);
+          remain = "";
+        }
+        else {
+          Press(remain.substring(0, latest_space));
+          remain = remain.substring(latest_space + 1);
+        }
+        delay(5);
+      }
+    }
+
+    Keyboard.releaseAll();
+    delay(defaultDelay);
+  }
+
 }
 
 
@@ -86,18 +115,57 @@ void Press(String b) {
   else if (b.equals("F10")) Keyboard.press(KEY_F10);
   else if (b.equals("F11")) Keyboard.press(KEY_F11);
   else if (b.equals("F12")) Keyboard.press(KEY_F12);
+  else if (b.equals("NUM_0")) Keyboard.press(234);
+  else if (b.equals("NUM_1")) Keyboard.press(225);
+  else if (b.equals("NUM_2")) Keyboard.press(226);
+  else if (b.equals("NUM_3")) Keyboard.press(227);
+  else if (b.equals("NUM_4")) Keyboard.press(228);
+  else if (b.equals("NUM_5")) Keyboard.press(229);
+  else if (b.equals("NUM_6")) Keyboard.press(230);
+  else if (b.equals("NUM_7")) Keyboard.press(231);
+  else if (b.equals("NUM_8")) Keyboard.press(232);
+  else if (b.equals("NUM_9")) Keyboard.press(233);
+  else if (b.equals("CZ_0")) Keyboard.press(41);//////// Czech layout is different
+  else if (b.equals("CZ_1")) Keyboard.press(33);
+  else if (b.equals("CZ_2")) Keyboard.press(64);
+  else if (b.equals("CZ_3")) Keyboard.press(35);
+  else if (b.equals("CZ_4")) Keyboard.press(36);
+  else if (b.equals("CZ_5")) Keyboard.press(37);
+  else if (b.equals("CZ_6")) Keyboard.press(94);
+  else if (b.equals("CZ_7")) Keyboard.press(38);
+  else if (b.equals("CZ_8")) Keyboard.press(42);
+  else if (b.equals("CZ_9")) Keyboard.press(40);
+  else if (b.equals("ASTERIX") || b.equals("HVEZDICKA")) Keyboard.press(221);
+  else if (b.equals("MINUS")) Keyboard.press(222);
+  else if (b.equals("PLUS")) Keyboard.press(223);
+  else if (b.equals("SLASH")) Keyboard.press(220);
   else if (b.equals("SPACE")) Keyboard.press(' ');
+  else if (b.equals("PRINTSCREEN")) Keyboard.press(206);
+
+  // Mouse
+  else if (b.equals("CLICK") || b.equals("CLICK_LEFT") || b.equals("MOUSE_CLICK_LEFT") || b.equals("MOUSE_CLICK")) Mouse.click();
+  else if (b.equals("CLICK_RIGHT") || b.equals("MOUSE_CLICK_RIGHT")) Mouse.click(MOUSE_RIGHT);
+  else if (b.equals("CLICK_MIDDLE") || b.equals("MOUSE_CLICK_MIDDLE")) Mouse.click(MOUSE_MIDDLE);
+
+  else if (b.equals("PRESS") || b.equals("PRESS_LEFT") || b.equals("MOUSE_PRESS_LEFT")) Mouse.press();
+  else if (b.equals("PRESS_RIGHT") || b.equals("MOUSE_PRESS_RIGHT")) Mouse.press(MOUSE_RIGHT);
+  else if (b.equals("PRESS_MIDDLE") || b.equals("MOUSE_PRESS_MIDDLE")) Mouse.press(MOUSE_MIDDLE);
+
+  else if (b.equals("RELEASE") || b.equals("RELEASE_LEFT") || b.equals("MOUSE_RELEASE_LEFT") || b.equals("MOUSE_RELEASE")) Mouse.release();
+  else if (b.equals("RELEASE_RIGHT") || b.equals("MOUSE_RELEASE_RIGHT")) Mouse.release(MOUSE_RIGHT);
+  else if (b.equals("RELEASE_MIDDLE") || b.equals("MOUSE_RELEASE_MIDDLE")) Mouse.release(MOUSE_MIDDLE);
   //else Serial.println("not found :'"+b+"'("+String(b.length())+")");
 }
 
 void setup() {
   Keyboard.begin();
+  Mouse.begin();
   Serial.begin(BAUD_RATE);
   ExternSerial.begin(BAUD_RATE);
-  pinMode(FLASH_PIN, INPUT_PULLUP);
   pinMode(LED_BUILTIN, OUTPUT);
-
-  isFlash = !digitalRead(FLASH_PIN);
+  pinMode(FLASH_PIN, INPUT_PULLUP);
+  isFlash = analogRead(FLASH_PIN) < 100;
+  pinMode(FLASH_PIN, INPUT);
   if (isFlash) {
     digitalWrite(LED_BUILTIN, HIGH);
   }
@@ -126,29 +194,46 @@ void loop() {
     }
 
     if (bufferStr.length() > 0) {
+      if (os == "") {
+        FingerprintUSBHost.guessHostOS(os);
+        os.toUpperCase();
+      }
 
+      bufferStr.replace("\r\n", "\n");
       bufferStr.replace("\r", "\n");
-      bufferStr.replace("\n\n", "\n");
 
       while (bufferStr.length() > 0) {
-        int latest_return = bufferStr.indexOf("\n");
-        if (latest_return == -1) {
-          Serial.println("run: " + bufferStr);
-          Line(bufferStr);
-          bufferStr = "";
+        if (textmode) {
+          int textend = bufferStr.indexOf("\nTEXTEND");
+          if (textend == -1) {
+            for (int i = 0; i < bufferStr.length() - 1; i++) Keyboard.write(bufferStr[i]);
+            bufferStr = "";
+          } else {
+            for (int i = 0; i < textend; i++) Keyboard.write(bufferStr[i]);
+            bufferStr = bufferStr.substring(textend + 8);
+            textmode = false;
+          }
         } else {
-          Serial.println("run: '" + bufferStr.substring(0, latest_return) + "'");
-          Line(bufferStr.substring(0, latest_return));
-          last = bufferStr.substring(0, latest_return);
-          bufferStr = bufferStr.substring(latest_return + 1);
+          int latest_return = bufferStr.indexOf("\n");
+          if (latest_return == -1) {
+            Serial.println("run: " + bufferStr);
+            Line(bufferStr);
+            bufferStr = "";
+          } else {
+            Serial.println("run: '" + bufferStr.substring(0, latest_return) + "'");
+            Line(bufferStr.substring(0, latest_return));
+            last = bufferStr.substring(0, latest_return);
+            bufferStr = bufferStr.substring(latest_return + 1);
+          }
         }
       }
 
       bufferStr = "";
+      dontwrite = false;
+      textmode = false;
       ExternSerial.write(0x99);
       Serial.println("done");
       digitalWrite(LED_BUILTIN, LOW);
     }
   }
 }
-
