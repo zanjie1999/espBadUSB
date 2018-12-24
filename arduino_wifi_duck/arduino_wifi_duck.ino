@@ -8,7 +8,7 @@
 #define ExternSerial Serial1
 
 boolean isFlash = false;
-String os = "";
+String os;
 String bufferStr = "";
 String last = "";
 int defaultDelay = 0;
@@ -194,10 +194,8 @@ void loop() {
     }
 
     if (bufferStr.length() > 0) {
-      if (os == "") {
-        FingerprintUSBHost.guessHostOS(os);
-        os.toUpperCase();
-      }
+      FingerprintUSBHost.guessHostOS(os);
+      os.toUpperCase();
 
       bufferStr.replace("\r\n", "\n");
       bufferStr.replace("\r", "\n");
