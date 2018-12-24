@@ -1,4 +1,15 @@
 # espUSB
+2018/12/24
+
+平安夜快乐~
+
+添加了一个鼠标移动点击的功能&键盘上一些新按键
+
+增加系统判断功能...虽然不知道原理但是觉得很厉害的样子(那个库在GitHub上找就有)
+
+给TEXT加上TEXTEND,现在TEXT可以写在其他脚本中了(不写会把剩下的部分都输入)
+
+页面说明还没改...咕咕咕...
 
 2018/12/21
 
@@ -54,7 +65,9 @@ SPIFFS web服务器
  
  ![虽然不好看但是还是蛮实用的](https://raw.githubusercontent.com/zanjie1999/espUSB/master/images/my_wifi_duck.jpg)
 
-## Contents
+
+
+## 懒得翻译,反正又不是看不懂
 - [Introduction](#introduction)
   - [What it is](#what-it-is)
   - [How it works](#how-it-works)
